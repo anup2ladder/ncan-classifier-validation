@@ -595,7 +595,7 @@ class FeatureExtractorMEC(FeatureExtractorTemplateMatching):
         
         for h in np.arange(0, self.harmonics_count*2, 2):
             x = self.template_signal[:, :, (h, h+1)]
-            self.sub_template_inverse[np.int(h/2)] = np.linalg.pinv(x)
+            self.sub_template_inverse[np.int32(h/2)] = np.linalg.pinv(x)
             
     def get_current_data_batch(self):
         """Bundle all data so they can be processed toegher"""
