@@ -272,16 +272,16 @@ class FeatureExtractorCCA(FeatureExtractorTemplateMatching):
          
         signal = xp.transpose(signal, axes=(0, 2, 1))      
         
-        q_signal = xp.linalg.qr(signal[0])[0]
-        q_signal = xp.expand_dims(q_signal, axis=0)
+        # q_signal = xp.linalg.qr(signal[0])[0]
+        # q_signal = xp.expand_dims(q_signal, axis=0)
 
-        # if self.explicit_multithreading > 0:
-        #     q_signal = np.linalg.qr(signal[0])[0]
-        #     q_signal = np.expand_dims(q_signal, axis=0)
-        # else:   
-        #     q_signal = xp.linalg.qr(signal[0])[0]
-        #     q_signal = xp.expand_dims(q_signal, axis=0)
-        #     # q_signal = self.qr_decomposition(signal)
+        if self.explicit_multithreading > 0:
+            q_signal = np.linalg.qr(signal[0])[0]
+            q_signal = np.expand_dims(q_signal, axis=0)
+        else:   
+            q_signal = xp.linalg.qr(signal)[0]
+            # q_signal = xp.expand_dims(q_signal, axis=0)
+            # q_signal = self.qr_decomposition(signal)
         q_signal = xp.transpose(q_signal, axes=(0, 2, 1))
                      
         product = xp.matmul(
