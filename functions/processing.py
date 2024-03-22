@@ -50,7 +50,12 @@ def apply_csp(
     """
 
     # Initialize the CSP object
-    csp = mne.decoding.CSP(n_components=n_components, reg=None, log=False, norm_trace=False)
+    csp = mne.decoding.CSP(
+        n_components = n_components,
+        reg = None,
+        log = False,
+        norm_trace = False,
+        )
 
     # Fit the CSP filters
     csp.fit(eeg_data, labels)
