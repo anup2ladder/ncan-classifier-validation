@@ -138,8 +138,8 @@ def read_xdf(file: str, picks: list[str]="all"):
                 Sampling rate [Hz]
             
     """
-
-    [data, header] = pyxdf.load_xdf(file, verbose=False)
+    file_path = os.path.normpath(file)  # Normalize path OS agnostic
+    [data, header] = pyxdf.load_xdf(file_path, verbose=False)
     
     for stream in data:
         # Obtain data for SMARTING headset
@@ -179,7 +179,8 @@ def read_xdf_unity_markers(file: str) -> tuple[np.ndarray, list[str]]:
             - `marker_data`. List with the string of markers.
     """
 
-    [data, _] = pyxdf.load_xdf(file, verbose=False)
+    file_path = os.path.normpath(file)  # Normalize path OS agnostic
+    [data, _] = pyxdf.load_xdf(file_path, verbose=False)
 
     for stream in data:
         if stream["info"]["name"][0] == 'UnityMarkerStream':
@@ -315,7 +316,8 @@ def epochs_stim_freq(
     eeg_epochs: list,
     labels: list,
     stimuli: dict,
-    freqs: dict
+    freqs: dict,
+    mode: str = "trim",
     ) -> list:
     """
         Creates EEG epochs in a list of lists organized by stimuli and freqs
@@ -330,13 +332,17 @@ def epochs_stim_freq(
                 Dictionary with the unique stimuli labels
             freqs: dict
                 Dictionary with the uniquie frequency labels
+            mode: str
+                Mode to convert all epochs to the same length,'trim' (default) or 'zeropad'
 
         Returns
             eeg_epochs_organized: list
-                List of organized eeg epochs in the shape [stimuli][freqs][samples, chans]
+                List of organized eeg epochs in the shape [stimuli][freqs][trials][samples, chans]
     """
     # Preallocate list for organized epochs
     eeg_epochs_organized = [[[] for j in range(len(freqs))] for i in range(len(stimuli))]
+    mode_options = {"trim": np.min, "zeropad": np.max}
+    mode_nsamples = {"trim": np.inf, "zeropad": 0}
     min_samples = np.inf
 
     # Organize epochs by stim and freq
@@ -346,14 +352,20 @@ def epochs_stim_freq(
                 if epoch == f"tvep,1,-1,1,{freq},{stim}":
                     eeg_epochs_organized[s][f].append(np.array(eeg_epochs[e]))
 
-                    # Get number of minimum samples detected
-                    min_samples = int(np.min((min_samples, eeg_epochs[e].shape[0])))
+                    # Get number of samples based on mode
+                    nsamples = int(mode_options[mode]((mode_nsamples[mode], eeg_epochs[e].shape[0])))
+                    mode_nsamples[mode] = nsamples
 
-    # Trim all arrays to the min number of samples
+    # Change length of array based on mode
     for s, _ in stimuli.items():
         for f, _ in freqs.items():
             for t in range(3):  # For each trial
-                eeg_epochs_organized[s][f][t] = eeg_epochs_organized[s][f][t][:min_samples, :].T
+                if (mode == "trim"):
+                    eeg_epochs_organized[s][f][t] = eeg_epochs_organized[s][f][t][:min_samples, :].T
+                elif (mode == "zeropad"):
+                    pad_length = nsamples - eeg_epochs_organized[s][f][t].shape[0]
+                    pad_dimensions = ((0, pad_length), (0, 0))
+                    eeg_epochs_organized[s][f][t] = np.pad(eeg_epochs_organized[s][f][t], pad_dimensions, 'constant', constant_values=0).T
 
     return np.array(eeg_epochs_organized)
 
@@ -434,3 +446,21 @@ def label_by_stim_type(
             output_labels.append(key)
 
     return np.array(output_labels)
+
+def import_system_agnostic(file: str):
+    """
+        Imports a file in a system-agnostic way by converting the file path to the appropriate format for the current operating system.
+
+        Parameters
+        ----------
+            - file: str
+                Full directory of the file to import
+
+        Returns
+        -------
+            - file_path: str
+                System-agnostic file path
+    """
+    file_path = os.path.normpath(file)
+
+    return file_path
