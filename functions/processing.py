@@ -12,60 +12,51 @@ import scipy.signal as signal
 
 def line_filter(eeg, srate, f_notch, f_order):
 
+    # Create the notch filter
     [b,a] = signal.iirnotch(
         w0 = f_notch,
         Q = 30,
         fs = srate,
         )
     
+    # Implement notch filter
     filtered = signal.filtfilt(
         b = b,
         a = a,
         x = eeg,
         )
-    
-    # sos = signal.butter(
-    #     N = f_order,
-    #     Wn = [f_notch-1, f_notch+1],
-    #     fs = srate,
-    #     btype = "bandstop",
-    #     output = "sos"
-    #     )
-    
-    # filtered = signal.sosfiltfilt(
-    #     sos = sos,
-    #     x = eeg
-    # )
 
     return filtered
 
-def common_spatial_pattern(eeg, labels, n_components, srate):
+def apply_csp(
+    eeg_data:np.ndarray,
+    labels:np.ndarray,
+    n_components:int = 4
+    ) -> np.ndarray:
+    """
+        Applies a CSP filter to EEG epoched data.
 
-    # Create MNE Raw object
-    info = mne.create_info(
-        ch_names = labels,
-        ch_types = "eeg",
-        sfreq = srate
-        )
+        Parameters:
+            eeg_data: np.ndarray
+                The EEG data. Shape should be [n_epochs, n_channels, n_samples].
+            labels: np.ndarray
+                The labels for each epoch.
+            n_components: int
+                The number of components to keep.
 
-    raw = mne.io.RawArray(
-        data = eeg,
-        info = info
-        )
+        Returns:
+            transformed_data: np.ndarray
+                The transformed EEG data.
+    """
 
-    # Apply common spatial pattern
-    csp = mne.decoding.CSP(
-        n_components = n_components,
-        reg = "ledoit_wolf"
-        )
+    # Initialize the CSP object
+    csp = mne.decoding.CSP(n_components=n_components, reg=None, log=False, norm_trace=False)
 
-    csp.fit(
-        raw
-        )
+    # Fit the CSP filters
+    csp.fit(eeg_data, labels)
 
-    # Apply the filter
-    csp_eeg = csp.transform(
-        raw
-        )
+    # Manually apply the CSP filters to the data
+    transformed_data = np.dot(csp.filters_[:n_components], eeg_data)
+    transformed_data = np.transpose(transformed_data, (1, 0, 2))
 
-    return csp_eeg
+    return transformed_data
