@@ -1,5 +1,6 @@
 """
-    Set of functions to work with data files
+    Data tools
+        Set of functions to organize and import data from multiple types of datasets.
 """
 
 # Import libraries
@@ -10,6 +11,60 @@ import numpy as np
 import pandas as pd
 import scipy.signal as signal
 from collections import OrderedDict
+
+# Set log level for MNE
+mne.set_log_level(verbose=False)
+
+def moabb_events_to_np(mne_raw:mne.io.Raw,
+                       tmin:float,
+                       tmax:float,
+                       events_dict:dict=None,
+                       chans=None) -> tuple[np.ndarray, np.ndarray]:
+    """
+        This function takes data from the MOABB package, creates epochs based on the stimulus vector,
+        and returns the 3D matrix with shape [epochs, channels, samples]
+
+        Parameters
+        ----------
+            `mne_raw`: mne.io.fif.raw.Raw
+                MNE object containing the EEG data with the stimulus vector
+            `tmin`: float
+                Start time of the epochs [sec]
+            `tmax`: float
+                End time of the epochs [sec]
+            `events_dict`: dict
+                Dictionary containing events to use. Values must match event ID of stimulus vector.
+            `chans`: list[str] | None
+                List of strings with the names of the channels to pick. If None, use all channels
+
+        Returns
+        -------
+            epoched_data: np.ndarray
+                Epoched data in 3D numpy array [epochs, channels, samples]
+    """
+    # Extract event data
+    events = mne.find_events(mne_raw)
+    
+    # If we only want certain channels
+    if chans != None:
+        mne_raw = mne_raw.pick(chans)
+
+    # Create epochs
+    mne_epoched = mne.Epochs(mne_raw,
+                             events=events,
+                             event_id=events_dict,
+                             baseline=None,
+                             tmin=tmin,
+                             tmax=tmax,
+                             verbose=False)
+    epochs_np = mne_epoched.get_data()
+
+    # If events dict exist, return only events of interest
+    if events_dict is not None:
+        mask = np.isin(events[:,2], list(events_dict.values()))
+        events = events[mask,:]
+
+    return (events, epochs_np)
 
 
 def select_importer(file: str, picks: list[str]="all"):
