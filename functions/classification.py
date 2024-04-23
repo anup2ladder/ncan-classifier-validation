@@ -82,7 +82,7 @@ def fb_rg_logreg(
 
     # Apply MOABB pipeline
     pipe =  make_pipeline(
-        # ExtendedSSVEPSignal(),
+        ExtendedSSVEPSignal(),
         Covariances(estimator="lwf"),
         TangentSpace(),
         LogisticRegression(solver="lbfgs", multi_class="auto")

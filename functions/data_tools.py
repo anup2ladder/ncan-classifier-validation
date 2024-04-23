@@ -15,6 +15,8 @@ from collections import OrderedDict
 # Set log level for MNE
 mne.set_log_level(verbose=False)
 
+
+
 def moabb_events_to_np(mne_raw:mne.io.Raw,
                        tmin:float,
                        tmax:float,
