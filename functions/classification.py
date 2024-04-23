@@ -11,15 +11,49 @@ from pyriemann.estimation import Covariances
 from pyriemann.tangentspace import TangentSpace
 from sklearn.linear_model import LogisticRegression
 from moabb.pipelines import ExtendedSSVEPSignal
+from sklearn.model_selection import cross_val_predict
 
+def rg_logreg(
+    eeg_data: np.ndarray,
+    labels: np.ndarray
+    ) -> np.ndarray:
+    """
+        Implements Riemmanian Geometry + Logistic regression classifier.
+        Follows the example found in the [MOABB](https://moabb.neurotechx.com/docs/auto_examples/plot_cross_subject_ssvep.html#sphx-glr-auto-examples-plot-cross-subject-ssvep-py)
+        SSVEP functions.
+
+        Parameters
+        ----------
+        eeg_data: np.ndarray
+            The EEG data. Shape should be [n_epochs, n_channels, n_samples].
+        labels: np.ndarray
+            The labels for each epoch.
+
+        Returns
+        -------
+        predictions: np.ndarray
+            The predicted labels.
+    """
+
+    # Apply MOABB pipeline
+    pipe =  make_pipeline(
+        Covariances(estimator="lwf"),
+        TangentSpace(),
+        LogisticRegression(solver="lbfgs", multi_class="auto")
+        )
+    
+    predictions = cross_val_predict(pipe, eeg_data, labels, cv=5)
+    # predictions = pipe.fit(eeg_data, labels).predict(eeg_data)
+
+    return predictions
 
 def fb_rg_logreg(
-        eeg_data:np.ndarray,
-        stim_freqs:list[float],
-        eeg_channels:list[str],
-        srate:float,
-        labels:np.ndarray
-        ) -> np.ndarray:
+    eeg_data:np.ndarray,
+    stim_freqs:list[float],
+    eeg_channels:list[str],
+    srate:float,
+    labels:np.ndarray
+    ) -> np.ndarray:
     """
         Implements Filter bank with  Riemmanian Geometry + Logistic regression classifier.
         Follows the example found in the [MOABB](https://moabb.neurotechx.com/docs/auto_examples/plot_cross_subject_ssvep.html#sphx-glr-auto-examples-plot-cross-subject-ssvep-py)
@@ -44,17 +78,18 @@ def fb_rg_logreg(
             The predicted labels.        
     """
     # Create filter bank signal
-    filter_bank_eeg = filter_bank(eeg_data, stim_freqs, eeg_channels, srate)
+    # filter_bank_eeg = filter_bank(eeg_data, stim_freqs, eeg_channels, srate)
 
     # Apply MOABB pipeline
     pipe =  make_pipeline(
-        ExtendedSSVEPSignal(),
+        # ExtendedSSVEPSignal(),
         Covariances(estimator="lwf"),
         TangentSpace(),
         LogisticRegression(solver="lbfgs", multi_class="auto")
         )
 
-    predictions = pipe.fit(filter_bank_eeg, labels).predict(filter_bank_eeg)
+    # predictions = pipe.fit(filter_bank_eeg, labels).predict(filter_bank_eeg)
+    predictions = pipe.fit(eeg_data, labels).predict(eeg_data)
 
     return predictions
 
