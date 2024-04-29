@@ -15,7 +15,8 @@ from sklearn.model_selection import cross_val_predict
 
 def rg_logreg(
     eeg_data: np.ndarray,
-    labels: np.ndarray
+    labels: np.ndarray,
+    cv:int = 3,
     ) -> np.ndarray:
     """
         Implements Riemmanian Geometry + Logistic regression classifier.
@@ -28,6 +29,8 @@ def rg_logreg(
             The EEG data. Shape should be [n_epochs, n_channels, n_samples].
         labels: np.ndarray
             The labels for each epoch.
+        cv: int
+            The number of cross-validation folds. Must be at least 2 and at most the number of samples.
 
         Returns
         -------
@@ -42,7 +45,7 @@ def rg_logreg(
         LogisticRegression(solver="lbfgs", multi_class="auto")
         )
     
-    predictions = cross_val_predict(pipe, eeg_data, labels, cv=5)
+    predictions = cross_val_predict(pipe, eeg_data, labels, cv=cv)
     # predictions = pipe.fit(eeg_data, labels).predict(eeg_data)
 
     return predictions

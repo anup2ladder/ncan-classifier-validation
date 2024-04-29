@@ -65,3 +65,47 @@ def apply_csp(
     transformed_data = np.transpose(transformed_data, (1, 0, 2))
 
     return transformed_data
+
+def bandpass_filter(
+    eeg:np.ndarray,
+    srate:float,
+    f_low:float,
+    f_high:float,
+    f_order:int = 5
+    ) -> np.ndarray:
+    """
+        Applies a bandpass filter to the EEG data.
+
+        Parameters:
+            eeg: np.ndarray
+                The EEG data. Shape should be [n_epochs, n_channels, n_samples].
+            srate: float
+                The sampling rate of the EEG data [Hz].
+            f_low: float
+                The low cutoff frequency [Hz].
+            f_high: float
+                The high cutoff frequency [Hz].
+            f_order: int
+                The order of the filter.
+
+        Returns:
+            filtered_data: np.ndarray
+                The filtered EEG data.
+    """
+
+    # Create the bandpass filter
+    sos = signal.butter(
+        N = f_order,
+        Wn = [f_low, f_high],
+        btype = "band",
+        fs = srate,
+        output = "sos"
+        )
+
+    # Implement the bandpass filter
+    filtered_data = signal.sosfiltfilt(
+        sos= sos,
+        x = eeg,
+        )
+
+    return filtered_data

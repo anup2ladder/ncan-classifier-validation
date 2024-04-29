@@ -15,7 +15,30 @@ from collections import OrderedDict
 # Set log level for MNE
 mne.set_log_level(verbose=False)
 
+def create_label_mask(labels: list[str], n: int, seed: int = None) -> np.ndarray:
+    """
+    Creates a mask of n-distinct labels from a list of labels by randomly picking the labels.
 
+    Parameters
+    ----------
+    labels : list[str]
+        List of labels.
+    n : int
+        Number of distinct labels to include in the mask.
+    seed : int, optional
+        Seed number for reproducibility, by default None.
+
+    Returns
+    -------
+    mask : np.ndarray
+        Mask of n-distinct labels.
+    """
+    unique_labels = np.unique(labels)
+    if seed is not None:
+        np.random.seed(seed)
+    selected_labels = np.random.choice(unique_labels, size=n, replace=False)
+    mask = np.isin(labels, selected_labels)
+    return mask
 
 def moabb_events_to_np(mne_raw:mne.io.Raw,
                        tmin:float,
