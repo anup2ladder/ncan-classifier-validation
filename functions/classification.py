@@ -81,7 +81,7 @@ def fb_rg_logreg(
             The predicted labels.        
     """
     # Create filter bank signal
-    # filter_bank_eeg = filter_bank(eeg_data, stim_freqs, eeg_channels, srate)
+    filter_bank_eeg = filter_bank(eeg_data, stim_freqs, eeg_channels, srate)
 
     # Apply MOABB pipeline
     pipe =  make_pipeline(
@@ -91,8 +91,8 @@ def fb_rg_logreg(
         LogisticRegression(solver="lbfgs", multi_class="auto")
         )
 
-    # predictions = pipe.fit(filter_bank_eeg, labels).predict(filter_bank_eeg)
-    predictions = pipe.fit(eeg_data, labels).predict(eeg_data)
+    predictions = pipe.fit(filter_bank_eeg, labels).predict(filter_bank_eeg)
+    # predictions = pipe.fit(eeg_data, labels).predict(eeg_data)
 
     return predictions
 
