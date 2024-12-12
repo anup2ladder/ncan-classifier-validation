@@ -363,7 +363,11 @@ class FeatureExtractorMEC(FeatureExtractorTemplateMatching):
         snrs_reshaped = snrs_reshaped[ns]
         snrs = xp.reshape(snrs_reshaped, snrs.shape[0:2])
         
-        a = cp.asnumpy(snrs)
+        if self.use_gpu == True:
+            a = cp.asnumpy(snrs)
+        else:
+            a = snrs
+
         if np.isnan(a).any():
             b = 3
         
